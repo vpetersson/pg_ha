@@ -6,7 +6,7 @@
 #
 
 # Define the remote node
-REMOTE=TheOtherNode
+REMOTE=box1
 
 # Postgres user
 PGUSER=pgsql
@@ -14,7 +14,7 @@ PGUSER=pgsql
 # Date
 TIME=$(date +%Y-%m-%d_%H:%M)
 
-# Since this script maylaunches at boot, we need to set the proper path.
+# Since this script may launches at boot, we need to set the proper path.
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin
 
 case "$1" in

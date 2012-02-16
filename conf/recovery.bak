@@ -1,0 +1,3 @@
+standby_mode = 'on'
+primary_conninfo = 'host=box1 port=5432'
+trigger_file = '/tmp/pgsql.trigger'
