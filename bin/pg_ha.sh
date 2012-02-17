@@ -93,26 +93,50 @@ case "$1" in
 		load_rc_config ucarp
 
 		UCARPIF=$(ifconfig | grep "$ucarp_addr " | grep -v grep)
-		WALSEND=$(ps aux | grep "wal sender process" | grep -v grep)
-		WALRECV=$(ps aux | grep "wal receiver process" | grep -v grep)
-
+		
 		echo "Checking UCARP Status..."
 		if [ "$UCARPIF" != "" ];
 		then 
+			# Get xlog data from PostgreSQL
+			LOCALMASTERSTAT=$(sudo -u $PGUSER psql postgres -c "SELECT pg_current_xlog_location()" $PGUSER | head -n 3 | tail -n 1)
+			REMOTESLAVESTAT=$(sudo -u $PGUSER psql -h$REMOTE postgres -c "SELECT pg_last_xlog_receive_location()" $PGUSER | head -n 3 | tail -n 1)
+			
 			echo -e "\tI'm the UCARP master!"
 			echo "Checking for WAL Sender Process..."
+
+			# Check for Wal sending process
+			WALSEND=$(ps aux | grep "wal sender process" | grep -v grep)
 			if [ "$WALSEND" != "" ];
 			then 
 				echo -e "\tWAL Sender Process found!"
+
+				# Print Replication status
+				echo -e "Master xlog location (local):"
+				echo -e "\t$LOCALMASTERSTAT"
+				echo -e "Slave xlog location (remote):"
+				echo -e "\t$REMOTESLAVESTAT"
 			else
 				echo -e "\tWarning! No WAL Sender Process found."
 			fi
 		else
+			# Get xlog data from PostgreSQL
+			LOCALSLAVESTAT=$(sudo -u $PGUSER psql postgres -c "SELECT pg_last_xlog_receive_location()" $PGUSER | head -n 3 | tail -n 1)
+			REMOTEMASTERSTAT=$(sudo -u $PGUSER psql -h$REMOTE postgres -c "SELECT pg_current_xlog_location()" $PGUSER | head -n 3 | tail -n 1)
+			
 			echo -e "\tI'm the UCARP slave!"
 			echo "Checking for WAL Receiver Process..."
+
+			# Check for Wal receiver process
+			WALRECV=$(ps aux | grep "wal receiver process" | grep -v grep)
 			if [ "$WALRECV" != "" ];
 			then 
 				echo -e "\tWAL Receiver Process found!"
+
+				# Print Replication status
+				echo -e "Slave xlog location (local):"
+				echo -e "\t$LOCALSLAVESTAT"
+				echo -e "Master xlog location (remote):"
+				echo -e "\t$REMOTEMASTERSTAT"
 			else
 				echo -e "\tWarning! No WAL Receiver Process found."
 			fi
