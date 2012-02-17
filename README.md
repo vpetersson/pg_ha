@@ -1,9 +1,10 @@
-# Scripts for setting up PostgreSQL in High Availability for FreeBSD #
+# 'pg_ha' - PostgreSQL in High Availability #
 
-This is a compilation of scripts that I've worked on for some time. This is a relatively complex setup, and you'll find the documentation for the setup in [this](http://viktorpetersson.com/2012/02/17/high-availability-with-postgresql-pgpool-ii-and-freebsd/) blog-post. Don't try to use the scripts without first reading the blog-post, as you'll most likely just get confused.
+'pg_ha' is a collection of scripts for setting up and running PostgreSQL in High Availability on FreeBSD. I've worked on for some time, and it is a relatively complex setup. You'll find the documentation [here](http://viktorpetersson.com/2012/02/17/high-availability-with-postgresql-pgpool-ii-and-freebsd/). 
 
-Just as a quick reference, the setup uses the following:
+The setup uses the following tools:
 
- * PostgreSQL with Streaming Replication
- * PGPool-II
- * UCARP
+ * [FreeBSD](http://www.freebsd.org) (but any UNIX/Linux distribution should work with some modifications)
+ * [PostgreSQL](http://www.postgresql.org/) with [Streaming Replication](http://wiki.postgresql.org/wiki/Streaming_Replication)
+ * [PGPool-II](http://pgpool.net/mediawiki/index.php/Main_Page)
+ * [UCARP](http://www.ucarp.org/project/ucarp)
