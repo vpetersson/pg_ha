@@ -31,7 +31,7 @@ case "$1" in
 	slave)
 		echo "Taking backup of local files prior to overwriting data."
 		sudo -u $PGUSER mkdir -p /usr/local/pgsql/ha_backups
-		sudo -u $PGUSER tar cfz /usr/local/pgsql/ha_backups/local_dump-$TIME.tar.gz --quiet --exclude="*~" /usr/local/pgsql/data
+		sudo -u $PGUSER tar cfz /usr/local/pgsql/ha_backups/local_dump-$TIME.tar.gz --exclude="*~" /usr/local/pgsql/data
 
 		echo "Removing trigger file."
 		sudo -u $PGUSER rm -f /tmp/pgsql.trigger
@@ -66,7 +66,7 @@ case "$1" in
 	init-slave)
 		echo "Taking backup of local files prior to overwriting."
 		sudo -u $PGUSER mkdir -p /usr/local/pgsql/ha_backups
-		sudo -u $PGUSER tar cfz /usr/local/pgsql/ha_backups/local_dump-$TIME.tar.gz --quiet --exclude="*~" /usr/local/pgsql/data
+		sudo -u $PGUSER tar cfz /usr/local/pgsql/ha_backups/local_dump-$TIME.tar.gz --exclude="*~" /usr/local/pgsql/data
 
 		echo "Removing trigger-file"
 		sudo -u $PGUSER rm -f /tmp/pgsql.trigger
