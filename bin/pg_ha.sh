@@ -30,7 +30,7 @@ case "$1" in
 	slave)
 		echo "Taking backup of local files prior to overwriting data."
 		sudo -u $PGUSER mkdir -p /usr/local/pgsql/ha_backups
-		sudo -u $PGUSER tar cfz /usr/local/pgsql/ha_backups/local_dump-$TIME.tar.gz --exclude="*~" /usr/local/pgsql/data
+		sudo -u $PGUSER tar cfz /usr/local/pgsql/ha_backups/local_dump-$TIME.tar.gz --quiet --exclude="*~" /usr/local/pgsql/data
 
 		echo "Removing trigger file."
 		sudo -u $PGUSER rm -f /tmp/pgsql.trigger
@@ -61,13 +61,19 @@ case "$1" in
 	init-slave)
 		echo "Taking backup of local files prior to overwriting."
 		sudo -u $PGUSER mkdir -p /usr/local/pgsql/ha_backups
-		sudo -u $PGUSER tar cfz /usr/local/pgsql/ha_backups/local_dump-$TIME.tar.gz --exclude="*~" /usr/local/pgsql/data
+		sudo -u $PGUSER tar cfz /usr/local/pgsql/ha_backups/local_dump-$TIME.tar.gz --quiet --exclude="*~" /usr/local/pgsql/data
 
 		echo "Removing trigger-file"
 		sudo -u $PGUSER rm -f /tmp/pgsql.trigger
 
 		echo "Stopping PGSQL.."
 		sudo -u $PGUSER pg_ctl stop -D /usr/local/pgsql/data/ -m fast
+
+		# We'll do two sets. The first one without putting the master in backup-mode
+		# and the second with the master in backup-mode. This is to minimize the downtime
+		# as much as possible. We also run the first rsync with the '---checksum' and '--delete'.
+		# We have to use '--delete' to remove unused files, and '--checksum' since the regular
+		# rsync algorithm partially uses the timestamp to determine what needs to be synced. 
 
 		echo "Syncing files from master to slave...(initial)"
 		sudo -u $PGUSER rsync -a $PGUSER@$REMOTE:/usr/local/pgsql/data/ /usr/local/pgsql/data --checksum --delete --exclude 'postmaster.pid' --exclude '*~' --exclude '*.conf' --exclude 'recovery.*'
@@ -76,7 +82,7 @@ case "$1" in
 		sudo -u $PGUSER psql -h$REMOTE postgres -c "SELECT pg_start_backup('restore-slave', true)" $PGUSER
 
 		echo "Syncing files from master to slave...(final)"
-		sudo -u $PGUSER rsync -a $PGUSER@$REMOTE:/usr/local/pgsql/data/ /usr/local/pgsql/data --checksum --exclude 'postmaster.pid' --exclude '*~' --exclude '*.conf' --exclude 'recovery.*'
+		sudo -u $PGUSER rsync -a $PGUSER@$REMOTE:/usr/local/pgsql/data/ /usr/local/pgsql/data --exclude 'postmaster.pid' --exclude '*~' --exclude '*.conf' --exclude 'recovery.*'
 
 		echo "Restoring master to regular state..."
 		sudo -u $PGUSER psql -h$REMOTE postgres -c "SELECT pg_stop_backup()" $PGUSER
