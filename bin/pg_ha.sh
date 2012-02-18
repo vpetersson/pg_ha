@@ -23,6 +23,7 @@ if [ "$1" == "" ];
 case "$1" in
 
 	master)
+		# This is the trigger for PostgreSQL to step up as master
 		sudo -u $PGUSER touch /tmp/pgsql.trigger
 		echo -e "$(hostname) was just promoted to master for PostgreSQL.\n\nMake sure to login and active the slave." | mail -s "Warning! $(hostname) is now the PostgreSQL Master" $CONTACT
 	;;
@@ -40,6 +41,8 @@ case "$1" in
 		sudo -u $PGUSER rm -f /usr/local/pgsql/data/recovery.conf
 		sudo -u $PGUSER pg_ctl start -D /usr/local/pgsql/data/
 
+		# Dumping and restoring the database from the remote server locally.
+		# If the dump fails, (ie. not exit with error code 0), we abort.
 		echo "Dumping database from $REMOTE ..."
 		sudo -u $PGUSER pg_dumpall -h$REMOTE -f /usr/local/pgsql/ha_backups/master_db.dump-$TIME.sql;
 		if [ $? = 0 ]
@@ -47,9 +50,11 @@ case "$1" in
 				echo "Restoring database..."
 				sudo -u $PGUSER psql -U$PGUSER postgres -l -f /usr/local/pgsql/ha_backups/master_db.dump-$TIME.sql
 				sudo -u $PGUSER cp -f /usr/local/pgsql/data/recovery.bak  /usr/local/pgsql/data/recovery.conf
+
 				echo "Restarting PGSQL in slave-mode..."
 				sudo -u $PGUSER pg_ctl stop -D /usr/local/pgsql/data/
 				sudo -u $PGUSER pg_ctl start -D /usr/local/pgsql/data/ 
+
 				echo "Compressing database-dump.."
 				sudo -u $PGUSER gzip /usr/local/pgsql/ha_backups/master_db.dump-$TIME.sql
 				echo -e "$(hostname) is now an active slave for PostgreSQL.\nBackups are stored in '/usr/local/pgsql/ha_backups'." | mail -s "$(hostname) is now the PostgreSQL Slave" $CONTACT
@@ -69,7 +74,7 @@ case "$1" in
 		echo "Stopping PGSQL.."
 		sudo -u $PGUSER pg_ctl stop -D /usr/local/pgsql/data/ -m fast
 
-		# We'll do two sets. The first one without putting the master in backup-mode
+		# We'll do two sets of rsync. The first one without putting the master in backup-mode
 		# and the second with the master in backup-mode. This is to minimize the downtime
 		# as much as possible. We also run the first rsync with the '---checksum' and '--delete'.
 		# We have to use '--delete' to remove unused files, and '--checksum' since the regular
